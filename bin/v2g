@@ -1,0 +1,16 @@
+#!/bin/bash
+
+LIB_PATH="/usr/local/lib/v2g/v2g.sh"
+
+if [ ! -f "$LIB_PATH" ]; then
+    LIB_PATH="$(dirname "$0")/../lib/v2g.sh"
+fi
+
+if [ -f "$LIB_PATH" ]; then
+    source "$LIB_PATH"
+else
+    echo "Error: Could not find v2g library."
+    exit 1
+fi
+
+v2g_convert "$@"

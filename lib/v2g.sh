@@ -1,0 +1,179 @@
+#!/bin/bash
+# ------------------------------------------------------------------------------
+# Library: v2g
+# Description: Video to GIF converter with standardized quality presets.
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Help Function
+# ------------------------------------------------------------------------------
+v2g_help() {
+    cat << EOF
+Usage: v2g <input_video> [output_gif] [options]
+
+Description:
+  Converts video files to optimized GIFs using ffmpeg and gifsicle.
+
+Options:
+  -h, --help       Show this help message and exit
+  -q, --quality    Set quality preset (100, 80, 50, 25, 10)
+
+Quality Presets:
+  100   Pixel Perfect  (20fps, Original Res, No compression)
+  80    High           (15fps, Max 1080p, Light compression)
+  50    Medium         (12fps, Max 720p, Standard compression) *Default
+  25    Low            (10fps, Max 480p, High compression)
+  10    Potato         (5fps,  Max 320p, Aggressive compression)
+
+Examples:
+  v2g demo.mp4                   # Convert using default settings (50%)
+  v2g demo.mp4 -q 100            # High quality, larger file size
+  v2g demo.mp4 icon.gif -q 10    # Create a tiny, low-res thumbnail
+EOF
+}
+
+# ------------------------------------------------------------------------------
+# Main Conversion Function
+# ------------------------------------------------------------------------------
+v2g_convert() {
+    local input=""
+    local output=""
+    local quality="50"
+
+    # Parse Arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                v2g_help
+                return 0
+                ;;
+            -q|--quality)
+                if [[ -z "$2" || "$2" == -* ]]; then
+                    echo "Error: Argument for $1 is missing."
+                    return 1
+                fi
+                quality="$2"
+                shift 2
+                ;;
+            -*) # Unknown option
+                echo "Error: Unknown option $1"
+                v2g_help
+                return 1
+                ;;
+            *) # Positional args (Input/Output)
+                if [ -z "$input" ]; then
+                    input="$1"
+                elif [ -z "$output" ]; then
+                    output="$1"
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate Input
+    if [ -z "$input" ]; then
+        echo "Error: Input file required."
+        echo "Try 'v2g --help' for usage."
+        return 1
+    fi
+
+    if [ ! -f "$input" ]; then
+        echo "Error: File '$input' not found."
+        return 1
+    fi
+
+    # Determine Output Name
+    if [ -z "$output" ]; then
+        output="${input%.*}.gif"
+    fi
+    if [[ "$output" != *.gif ]]; then
+        output="${output}.gif"
+    fi
+
+    # Set Technical Parameters based on Quality Matrix
+    local fps
+    local scale
+    local lossy_level
+    local filter_graph
+
+    case "$quality" in
+        100) # Pixel Perfect
+            fps="20"
+            scale="scale=-1:-1:flags=lanczos"
+            lossy_level="0"
+            echo "Mode: 100% (Pixel Perfect) - Original Res, 20fps"
+            ;;
+        80) # High
+            fps="15"
+            scale="scale='min(1080,iw)':-1:flags=lanczos"
+            lossy_level="30"
+            echo "Mode: 80% (High Quality) - Max 1080p, 15fps"
+            ;;
+        50) # Medium (Default)
+            fps="12"
+            scale="scale='min(720,iw)':-1:flags=lanczos"
+            lossy_level="80"
+            echo "Mode: 50% (Standard) - Max 720p, 12fps"
+            ;;
+        25) # Low
+            fps="10"
+            scale="scale='min(480,iw)':-1:flags=lanczos"
+            lossy_level="120"
+            echo "Mode: 25% (Space Saver) - Max 480p, 10fps"
+            ;;
+        10) # Potato
+            fps="5"
+            scale="scale='min(320,iw)':-1:flags=lanczos"
+            lossy_level="200"
+            echo "Mode: 10% (Aggressive) - Max 320p, 5fps"
+            ;;
+        *)
+            echo "Error: Invalid quality '$quality'. Use 100, 80, 50, 25, or 10."
+            return 1
+            ;;
+    esac
+
+    # Check Dependencies (Runtime check)
+    if ! command -v ffmpeg &> /dev/null; then
+        echo "Error: ffmpeg is not installed."
+        return 1
+    fi
+    if ! command -v gifsicle &> /dev/null; then
+        echo "Error: gifsicle is not installed."
+        return 1
+    fi
+
+    echo "Converting '$input' to '$output'..."
+
+    # Conversion logic
+    # [0:v] split [a][b];[a] palettegen [p];[b][p] paletteuse
+    filter_graph="fps=$fps,$scale,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
+
+    # Capture start time for duration calculation
+    local start_time=$(date +%s)
+
+    if [ "$lossy_level" -eq "0" ]; then
+        ffmpeg -v error -stats -i "$input" -vf "$filter_graph" -f gif - | gifsicle -O3 > "$output"
+    else
+        ffmpeg -v error -stats -i "$input" -vf "$filter_graph" -f gif - | gifsicle -O3 --lossy="$lossy_level" > "$output"
+    fi
+
+    local status=$?
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+
+    if [ $status -eq 0 ]; then
+        # Get file size in human readable format
+        local size
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            size=$(du -h "$output" | cut -f1) # macOS
+        else
+            size=$(du -h "$output" | cut -f1) # Linux
+        fi
+        echo -e "\nDone! Saved to '$output' ($size) in ${duration}s"
+    else
+        echo -e "\nError: Conversion failed."
+        return 1
+    fi
+}
