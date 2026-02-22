@@ -1,10 +1,11 @@
 #!/bin/bash
-
 set -e
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
+
+REPO_URL="https://raw.githubusercontent.com/LuciKritZ/v2g-tool/main"
 
 echo -e "${YELLOW}Starting v2g Universal Installer...${NC}"
 
@@ -42,27 +43,23 @@ install_deps() {
 # File Installation
 # ==============================================================================
 
-# Install Dependencies
 install_deps
 
-echo -e "\n${YELLOW}Installing Library Files...${NC}"
+echo -e "\n${YELLOW}Downloading Library Files...${NC}"
 
-# Define paths
 INSTALL_BIN="/usr/local/bin"
 INSTALL_LIB="/usr/local/lib/v2g"
 
-# Create lib directory
 echo "Creating $INSTALL_LIB..."
 sudo mkdir -p "$INSTALL_LIB"
 
-# Copy library
-echo "Copying library..."
-sudo cp lib/v2g.sh "$INSTALL_LIB/v2g.sh"
+# Downloading library
+echo "Downloading library..."
+sudo curl -fsSL "$REPO_URL/lib/v2g.sh" -o "$INSTALL_LIB/v2g.sh"
 sudo chmod 644 "$INSTALL_LIB/v2g.sh"
 
-# Copy executable
-echo "Copying executable..."
-sudo cp bin/v2g "$INSTALL_BIN/v2g"
+echo "Downloading executable..."
+sudo curl -fsSL "$REPO_URL/bin/v2g" -o "$INSTALL_BIN/v2g"
 sudo chmod +x "$INSTALL_BIN/v2g"
 
 echo -e "\n${GREEN}Success! 'v2g' is now installed on your system.${NC}"
