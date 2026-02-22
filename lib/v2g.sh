@@ -1,7 +1,7 @@
 #!/bin/bash
 # ------------------------------------------------------------------------------
 # Library: v2g
-# Description: Video to GIF converter with ultra-sharp quality presets.
+# Description: Video to GIF converter using the standard rgb8 baseline.
 # ------------------------------------------------------------------------------
 
 v2g_help() {
@@ -9,25 +9,25 @@ v2g_help() {
 Usage: v2g <input_video> [output_gif] [options]
 
 Description:
-  Converts video files to optimized, sharp GIFs.
+  Converts video files to GIFs using a clean, progressive scale.
 
 Options:
   -h, --help       Show this help message and exit
   -q, --quality    Set quality preset (100, 80, 50, 25, 10)
 
 Quality Presets:
-  100   Pixel Perfect  (20fps, Original Res, No compression)
-  80    High           (15fps, Max 1080p, Light compression)
-  50    Medium         (12fps, Max 720p, Standard compression) *Default
-  25    Low            (10fps, Max 480p, High compression)
-  10    Potato         (5fps,  Max 320p, Aggressive compression)
+  100   Best      (24fps, Original Res)
+  80    High      (15fps, Original Res)
+  50    Normal    (10fps, Original Res) *Default Baseline
+  25    Low       (10fps, Max Width 480p, Compressed)
+  10    Potato    (5fps,  Max Width 320p, Highly Compressed)
 EOF
 }
 
 v2g_convert() {
     local input=""
     local output=""
-    local quality="50" # Default
+    local quality="50"
 
     # Parse Arguments
     while [[ $# -gt 0 ]]; do
@@ -78,41 +78,36 @@ v2g_convert() {
         output="${output}.gif"
     fi
 
-    # Set Technical Parameters based on Quality Matrix
+    # Set Parameters progressively
     local fps
-    local scale
-    local lossy_level
+    local scale=""
+    local lossy=""
 
     case "$quality" in
         100)
-            fps="20"
-            scale="scale=-1:-1:flags=lanczos"
-            lossy_level="0"
-            echo "Mode: 100% (Pixel Perfect) - Original Res, 20fps"
+            fps="24"
+            echo "Mode: 100% (Best) - Original Res, 24fps"
             ;;
         80)
             fps="15"
-            scale="scale='min(1080,iw)':-1:flags=lanczos"
-            lossy_level="20" # Reduced from 30 for better sharpness
-            echo "Mode: 80% (High Quality) - Max 1080p, 15fps"
+            echo "Mode: 80% (High) - Original Res, 15fps"
             ;;
         50)
-            fps="12"
-            scale="scale='min(720,iw)':-1:flags=lanczos"
-            lossy_level="50" # Reduced heavily from 80
-            echo "Mode: 50% (Standard) - Max 720p, 12fps"
+            # THIS IS THE EXACT BASELINE COMMAND
+            fps="10"
+            echo "Mode: 50% (Normal) - Original Res, 10fps"
             ;;
         25)
             fps="10"
-            scale="scale='min(480,iw)':-1:flags=lanczos"
-            lossy_level="100"
-            echo "Mode: 25% (Space Saver) - Max 480p, 10fps"
+            scale="scale='min(480,iw)':-1"
+            lossy="80"
+            echo "Mode: 25% (Low) - Max 480p, 10fps, Compressed"
             ;;
         10)
             fps="5"
-            scale="scale='min(320,iw)':-1:flags=lanczos"
-            lossy_level="200"
-            echo "Mode: 10% (Aggressive) - Max 320p, 5fps"
+            scale="scale='min(320,iw)':-1"
+            lossy="200"
+            echo "Mode: 10% (Potato) - Max 320p, 5fps, Highly Compressed"
             ;;
         *)
             echo "Error: Invalid quality '$quality'."
@@ -120,7 +115,7 @@ v2g_convert() {
             ;;
     esac
 
-    # 5. Check Dependencies
+    # Check Dependencies
     if ! command -v ffmpeg &> /dev/null || ! command -v gifsicle &> /dev/null; then
         echo "Error: ffmpeg and gifsicle are required."
         return 1
@@ -129,25 +124,25 @@ v2g_convert() {
     echo "Converting '$input' to '$output'..."
     local start_time=$(date +%s)
 
-    # ==========================================================================
-    # THE NEW HIGH-SHARPNESS FILTER GRAPH
-    # ==========================================================================
-    # a. scale & unsharp: Downscales, then adds a 5x5 Luma unsharp mask to restore crisp edges.
-    # b. palettegen=stats_mode=diff: Focuses color fidelity on moving objects, ignoring static backgrounds.
-    # c. paletteuse=dither=bayer: Uses a structured bayer grid instead of noisy/fuzzy random dithering.
+    # Build Commands Safely using Arrays
+    local ffmpeg_args=(-v error -stats -i "$input" -pix_fmt rgb8 -r "$fps")
     
-    local sharpen="unsharp=5:5:0.5:3:3:0.0"
-    local p_gen="palettegen=stats_mode=diff:max_colors=256"
-    local p_use="paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle"
-    
-    local filter_graph="fps=$fps,$scale,$sharpen,split[s0][s1];[s0]$p_gen[p];[s1][p]$p_use"
-    # ==========================================================================
-
-    if [ "$lossy_level" -eq "0" ]; then
-        ffmpeg -v error -stats -i "$input" -vf "$filter_graph" -f gif - | gifsicle -O3 > "$output"
-    else
-        ffmpeg -v error -stats -i "$input" -vf "$filter_graph" -f gif - | gifsicle -O3 --lossy="$lossy_level" > "$output"
+    # Add scaling if defined (used in 25% and 10%)
+    if [ -n "$scale" ]; then
+        ffmpeg_args+=(-vf "$scale")
     fi
+    
+    # Finalize ffmpeg args for piping
+    ffmpeg_args+=(-f gif -)
+
+    # Build Gifsicle args
+    local gifsicle_args=(-O3)
+    if [ -n "$lossy" ]; then
+        gifsicle_args+=(--lossy="$lossy")
+    fi
+
+    # Execute Conversion
+    "${ffmpeg_args[@]}" | gifsicle "${gifsicle_args[@]}" > "$output"
 
     local status=$?
     local end_time=$(date +%s)
