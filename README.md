@@ -39,6 +39,21 @@ The script will:
 
 You may need to run with `sudo` when the script prompts for it (e.g. when creating `/usr/local/lib/v2g` or installing files).
 
+### macOS (Homebrew)
+
+On macOS you can install via the Homebrew formula in this repo. It pulls in **ffmpeg** and **gifsicle** as dependencies and installs the script to Homebrew’s prefix:
+
+```bash
+brew tap LuciKritZ/v2g-tool
+brew install v2g
+```
+
+Or in one command:
+
+```bash
+brew install LuciKritZ/v2g-tool/v2g
+```
+
 ### Arch Linux (AUR)
 
 If you're on Arch and prefer to install from the [AUR](https://aur.archlinux.org/packages/v2g), use an AUR helper or clone and build manually:
@@ -119,7 +134,7 @@ v2g --help
 
 | OS              | Package manager | Notes                    |
 |-----------------|-----------------|--------------------------|
-| macOS           | Homebrew        | `brew install ffmpeg gifsicle` |
+| macOS           | Homebrew        | `brew install ffmpeg gifsicle` or `brew install LuciKritZ/v2g-tool/v2g` (formula in repo) |
 | Arch Linux      | Pacman          | `pacman -S ffmpeg gifsicle`    |
 | Arch Linux      | AUR             | [v2g](https://aur.archlinux.org/packages/v2g) — `yay -S v2g` or `paru -S v2g` |
 | Debian / Ubuntu | Apt             | `apt install ffmpeg gifsicle`  |
