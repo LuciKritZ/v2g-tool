@@ -125,7 +125,7 @@ v2g_convert() {
     local start_time=$(date +%s)
 
     # Build Commands Safely using Arrays
-    local ffmpeg_args=(-v error -stats -i "$input" -pix_fmt rgb8 -r "$fps")
+    local ffmpeg_args=(ffmpeg -v error -stats -i "$input" -pix_fmt rgb8 -r "$fps")
     
     # Add scaling if defined (used in 25% and 10%)
     if [ -n "$scale" ]; then
