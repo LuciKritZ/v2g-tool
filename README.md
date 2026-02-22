@@ -39,6 +39,24 @@ The script will:
 
 You may need to run with `sudo` when the script prompts for it (e.g. when creating `/usr/local/lib/v2g` or installing files).
 
+### Arch Linux (AUR)
+
+If you're on Arch and prefer to install from the [AUR](https://aur.archlinux.org/packages/v2g), use an AUR helper or clone and build manually:
+
+```bash
+# With an AUR helper (e.g. yay, paru)
+yay -S v2g
+# or
+paru -S v2g
+
+# Or clone and build manually
+git clone https://aur.archlinux.org/v2g.git
+cd v2g
+makepkg -si
+```
+
+The AUR package pulls in **ffmpeg** and **gifsicle** as dependencies.
+
 ### Manual install
 
 1. Install **ffmpeg** and **gifsicle** using your package manager.
@@ -103,6 +121,7 @@ v2g --help
 |-----------------|-----------------|--------------------------|
 | macOS           | Homebrew        | `brew install ffmpeg gifsicle` |
 | Arch Linux      | Pacman          | `pacman -S ffmpeg gifsicle`    |
+| Arch Linux      | AUR             | [v2g](https://aur.archlinux.org/packages/v2g) — `yay -S v2g` or `paru -S v2g` |
 | Debian / Ubuntu | Apt             | `apt install ffmpeg gifsicle`  |
 | Fedora          | DNF             | Not auto-detected by installer; install deps manually, then use manual install below. |
 

@@ -24,6 +24,7 @@ install_deps() {
         fi
     elif [[ -f /etc/arch-release ]]; then
         echo "Detected Arch Linux."
+        echo "Tip: You can also install from AUR: yay -S v2g  (or paru -S v2g)"
         echo "Installing dependencies via Pacman..."
         sudo pacman -S --noconfirm ffmpeg gifsicle
     elif [[ -f /etc/debian_version ]]; then
