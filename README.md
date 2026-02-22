@@ -41,14 +41,21 @@ You may need to run with `sudo` when the script prompts for it (e.g. when creati
 
 ### macOS (Homebrew)
 
-On macOS you can install via the Homebrew formula in this repo. It pulls in **ffmpeg** and **gifsicle** as dependencies and installs the script to Homebrew’s prefix:
+On macOS you can install via the Homebrew formula in this repo. It pulls in **ffmpeg** and **gifsicle** as dependencies. No changes to GitHub are required.
+
+Homebrew's shorthand `brew tap user/repo` assumes the GitHub repo is named `homebrew-<repo>`. This repo is named `v2g-tool`, so use one of the options below.
+
+**Option 1: Full URL tap (recommended)**
 
 ```bash
-brew tap LuciKritZ/v2g-tool
+# 1. Tap using the explicit URL
+brew tap lucikritz/v2g-tool https://github.com/LuciKritZ/v2g-tool
+
+# 2. Install the tool
 brew install v2g
 ```
 
-Or in one command:
+**Option 2: Direct install (no tap)**
 
 ```bash
 brew install LuciKritZ/v2g-tool/v2g
