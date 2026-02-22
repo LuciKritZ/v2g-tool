@@ -6,7 +6,7 @@ A lightweight CLI tool that converts video files to high-quality, optimized GIFs
 
 - **Quality presets** — Choose from 5 presets (100, 80, 50, 25, 10) instead of tuning fps/scale/lossy by hand
 - **Optimized pipeline** — Generates a single palette and applies it for consistent colors; optional gifsicle lossy compression
-- **Cross-platform** — Works on macOS (Homebrew), Arch Linux, Debian/Ubuntu, and Fedora
+- **Cross-platform** — Works on macOS (Homebrew), Arch Linux, and Debian/Ubuntu (Fedora: install deps manually)
 - **Single command** — `v2g video.mp4` or `v2g video.mp4 output.gif -q 80`
 
 ## Requirements
@@ -20,19 +20,24 @@ The install script can install these for you on supported systems.
 
 ### One-line install (recommended)
 
-From the project root:
+**From the project root** (script still downloads library and executable from GitHub):
 
 ```bash
 ./install.sh
 ```
 
-This will:
+**From anywhere** (downloads the install script from GitHub, then the library and executable):
 
-1. Detect your OS and install **ffmpeg** and **gifsicle** (Homebrew on macOS, pacman/apt/dnf on Linux)
-2. Copy the library to `/usr/local/lib/v2g/`
-3. Install the `v2g` executable to `/usr/local/bin/`
+```bash
+curl -fsSL https://raw.githubusercontent.com/LuciKritZ/v2g-tool/main/install.sh | sudo bash
+```
 
-You may need to run with `sudo` if the script prompts for it (e.g. when creating `/usr/local/lib/v2g` or copying files).
+The script will:
+
+1. Detect your OS and install **ffmpeg** and **gifsicle** (Homebrew on macOS, pacman on Arch, apt on Debian/Ubuntu)
+2. Download the latest `v2g.sh` and `v2g` from the `main` branch on GitHub and install them to `/usr/local/lib/v2g/` and `/usr/local/bin/`
+
+You may need to run with `sudo` when the script prompts for it (e.g. when creating `/usr/local/lib/v2g` or installing files).
 
 ### Manual install
 
@@ -99,9 +104,9 @@ v2g --help
 | macOS           | Homebrew        | `brew install ffmpeg gifsicle` |
 | Arch Linux      | Pacman          | `pacman -S ffmpeg gifsicle`    |
 | Debian / Ubuntu | Apt             | `apt install ffmpeg gifsicle`  |
-| Fedora          | DNF             | `dnf install ffmpeg gifsicle`  |
+| Fedora          | DNF             | Not auto-detected by installer; install deps manually, then use manual install below. |
 
-On other systems, install **ffmpeg** and **gifsicle** manually and use the manual install steps above.
+On other systems, install **ffmpeg** and **gifsicle** manually and use the manual install steps below.
 
 ## How it works
 
